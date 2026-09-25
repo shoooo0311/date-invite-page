@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>デート誘い</title>
+  <style>
+    :root{
+      --bg: #fff5f7;
+      --card: #ffffff;
+      --text: #1f1f1f;
+      --accent: #ff6a8b;
+      --accent2: #ff9bb2;
+      --sub: #f4f0ff;
+      --good: #5cc08a;
+      --shadow: 0 18px 40px rgba(255, 106, 139, 0.18);
+      --danger: #e14d5d;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: linear-gradient(180deg, #fff7fa 0%, #fff4eb 100%);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(100%, 500px);
+      background: rgba(255,255,255,0.9);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 106, 139, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .screen {
+      display: none;
+      padding: 28px 22px 22px;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .title {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+      line-height: 1.5;
+      margin: 0 0 18px;
+      text-align: center;
+      color: #2b2b2b;
+    }
+
+    .subtitle {
+      font-size: 0.96rem;
+      color: #555;
+      text-align: center;
+      margin-bottom: 22px;
+      line-height: 1.6;
+    }
+
+    .button-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .option-btn, .admin-btn, .done-btn, .month-btn, .day-btn, .clear-btn {
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      font-weight: 700;
+    }
+
+    .option-btn {
+      width: 100%;
+      padding: 18px 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ffd6df, #ffe7f0);
+      color: #2e2e2e;
+      font-size: 1.05rem;
+      box-shadow: 0 8px 16px rgba(255, 106, 139, 0.12);
+    }
+
+    .option-btn:hover, .month-btn:hover, .day-btn:hover, .done-btn:hover, .admin-btn:hover, .clear-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .option-btn.yes {
+      background: linear-gradient(135deg, #ffe4a3, #ffd870);
+    }
+
+    .option-btn.no {
+      background: linear-gradient(135deg, #dfeaff, #eae7ff);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .month-btn {
+      min-width: 72px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #f2f5ff;
+      color: #2f3b58;
+      font-size: 0.95rem;
+    }
+
+    .month-btn.selected {
+      background: linear-gradient(135deg, #ffb7c7, #ff8ca0);
+      color: white;
+      box-shadow: 0 8px 18px rgba(255, 108, 146, 0.25);
+    }
+
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .day-btn {
+      padding: 12px 6px;
+      border-radius: 12px;
+      background: #f4f6fb;
+      color: #20304c;
+      font-size: 0.92rem;
+    }
+
+    .day-btn.selected {
+      background: linear-gradient(135deg, #7bd8a4, #57c58f);
+      color: white;
+      box-shadow: 0 8px 18px rgba(87, 197, 143, 0.22);
+    }
+
+    .selected-summary {
+      background: #fffaf5;
+      border: 1px solid #ffd6b3;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      color: #4a4a4a;
+      font-size: 0.96rem;
+      line-height: 1.6;
+    }
+
+    .done-btn {
+      width: 100%;
+      margin-top: 18px;
+      padding: 18px 16px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #ff7f9d, #ff557a);
+      color: white;
+      font-size: 1.05rem;
+      box-shadow: 0 12px 22px rgba(255, 85, 122, 0.25);
+    }
+
+    .mini {
+      font-size: 0.92rem;
+      color: #666;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .hidden-admin {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 30;
+    }
+
+    .admin-btn {
+      background: rgba(31, 31, 31, 0.82);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    }
+
+    .admin-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 18, 18, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 40;
+    }
+
+    .admin-panel.active {
+      display: flex;
+    }
+
+    .admin-card {
+      width: min(90vw, 720px);
+      max-height: 82vh;
+      overflow: auto;
+      background: white;
+      border-radius: 24px;
+      padding: 22px 18px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+    }
+
+    .admin-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .admin-head h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .close-x {
+      border: none;
+      background: #f3f3f3;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .admin-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .entry {
+      border: 1px solid #eee;
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: #fffafc;
+    }
+
+    .entry strong {
+      font-size: 0.93rem;
+    }
+
+    .entry p {
+      margin: 8px 0 0;
+      color: #444;
+      line-height: 1.6;
+      font-size: 0.9rem;
+    }
+
+    .empty {
+      text-align: center;
+      color: #666;
+      padding: 20px 0;
+    }
+
+    .clear-btn {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fce2e5;
+      color: var(--danger);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 420px) {
+      .day-grid {
+        grid-template-columns: repeat(4, minmax(0,1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="screen active" id="screen-start">
+      <h1 class="title">今度どっかデート行きませんか！</h1>
+      <div class="button-grid">
+        <button class="option-btn yes" data-next="screen-step2">はい</button>
+        <button class="option-btn no" data-next="screen-no">いいえ</button>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-step2">
+      <h2 class="title">どんなデートにしますか！</h2>
+      <div class="button-grid">
+        <button class="option-btn" data-type="映画">映画🎥</button>
+        <button class="option-btn" data-type="花見">花見🍁</button>
+        <button class="option-btn" data-type="ご飯だけ">ご飯だけ🍚</button>
+        <button class="option-btn" data-type="ドライブ">ドライブ🚗</button>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-step3">
+      <h2 class="title">ご飯を選んでください！</h2>
+      <div class="button-grid">
+        <button class="option-btn" data-food="焼肉">焼肉🍖</button>
+        <button class="option-btn" data-food="寿司">寿司🍣</button>
+        <button class="option-btn" data-food="イタリアン">イタリアン🍝</button>
+        <button class="option-btn" data-food="その他">その他</button>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-step4">
+      <h2 class="title">日にちの候補を選んでください！</h2>
+      <div class="subtitle">2026年の月を選んで、その月の日を複数選択できます。</div>
+
+      <div class="pill-row" id="monthButtons"></div>
+      <div id="daySection" style="display:none;">
+        <div class="day-grid" id="dayButtons"></div>
+      </div>
+
+      <div class="selected-summary" id="selectedSummary">
+        まだ候補が選ばれていません
+      </div>
+
+      <button class="done-btn" id="confirmDatesBtn">次へ</button>
+    </section>
+
+    <section class="screen" id="screen-final">
+      <h2 class="title">OKしてくれてありがとう！予定立てます！！</h2>
+      <div class="selected-summary" id="finalSummary"></div>
+      <button class="done-btn" id="submitBtn">完了</button>
+    </section>
+
+    <section class="screen" id="screen-no">
+      <h2 class="title">変なリンク送ってごめん！気が変わったらお願いします🙇</h2>
+      <button class="done-btn" id="closeNoBtn">閉じる</button>
+    </section>
+  </div>
+
+  <div class="hidden-admin">
+    <button class="admin-btn" id="adminToggleBtn">管理者用</button>
+  </div>
+
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-card">
+      <div class="admin-head">
+        <h3>回答一覧</h3>
+        <button class="close-x" id="closeAdminBtn" aria-label="閉じる">✕</button>
+      </div>
+
+      <div id="adminContent"></div>
+      <button class="clear-btn" id="clearAnswersBtn">回答を全削除</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "dateInviteAnswers_v1";
+    const appState = {
+      selectedType: "",
+      selectedFood: "",
+      selectedMonth: null,
+      selectedDates: [],
+      answers: JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")
+    };
+
+    const screens = document.querySelectorAll(".screen");
+    const monthButtonsWrap = document.getElementById("monthButtons");
+    const dayButtonsWrap = document.getElementById("dayButtons");
+    const daySection = document.getElementById("daySection");
+    const selectedSummary = document.getElementById("selectedSummary");
+    const finalSummary = document.getElementById("finalSummary");
+    const adminContent = document.getElementById("adminContent");
+
+    const monthNames = [
+      "1月","2月","3月","4月","5月","6月",
+      "7月","8月","9月","10月","11月","12月"
+    ];
+
+    function showScreen(id) {
+      screens.forEach(screen => screen.classList.toggle("active", screen.id === id));
+    }
+
+    function renderMonthButtons() {
+      monthButtonsWrap.innerHTML = "";
+      monthNames.forEach((monthName, index) => {
+        const btn = document.createElement("button");
+        btn.className = "month-btn";
+        btn.textContent = monthName;
+
+        if (appState.selectedMonth === index + 1) {
+          btn.classList.add("selected");
+        }
+
+        btn.addEventListener("click", () => {
+          appState.selectedMonth = index + 1;
+          appState.selectedDates = [];
+          renderMonthButtons();
+          renderDayButtons();
+          updateSelectedSummary();
+        });
+
+        monthButtonsWrap.appendChild(btn);
+      });
+    }
+
+    function getMonthLength(month) {
+      const year = 2026;
+      return new Date(year, month, 0).getDate();
+    }
+
+    function renderDayButtons() {
+      dayButtonsWrap.innerHTML = "";
+      if (!appState.selectedMonth) {
+        daySection.style.display = "none";
+        return;
+      }
+
+      daySection.style.display = "block";
+      const days = getMonthLength(appState.selectedMonth);
+
+      for (let d = 1; d <= days; d++) {
+        const btn = document.createElement("button");
+        btn.className = "day-btn";
+        btn.textContent = d;
+
+        if (appState.selectedDates.includes(d)) {
+          btn.classList.add("selected");
+        }
+
+        btn.addEventListener("click", () => {
+          if (appState.selectedDates.includes(d)) {
+            appState.selectedDates = appState.selectedDates.filter(day => day !== d);
+          } else {
+            appState.selectedDates.push(d);
+          }
+
+          appState.selectedDates.sort((a, b) => a - b);
+          renderDayButtons();
+          updateSelectedSummary();
+        });
+
+        dayButtonsWrap.appendChild(btn);
+      }
+    }
+
+    function updateSelectedSummary() {
+      if (!appState.selectedMonth) {
+        selectedSummary.textContent = "まだ候補が選ばれていません";
+        return;
+      }
+
+      const datesText = appState.selectedDates.length
+        ? appState.selectedDates.join("日, ")
+        : "日を選んでください";
+      selectedSummary.innerHTML = `
+        月: <strong>${appState.selectedMonth}月</strong><br>
+        日: <strong>${datesText}</strong>
+      `;
+    }
+
+    function saveAnswer(answer) {
+      const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const payload = {
+        ...answer,
+        createdAt: new Date().toISOString()
+      };
+      list.push(payload);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      appState.answers = list;
+    }
+
+    function renderAdminList() {
+      const rows = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+      if (!rows.length) {
+        adminContent.innerHTML = '<div class="empty">まだ回答はありません</div>';
+        return;
+      }
+
+      adminContent.innerHTML = "";
+      rows.forEach((item, index) => {
+        const entry = document.createElement("div");
+        entry.className = "entry";
+
+        const dateText = item.createdAt ? new Date(item.createdAt).toLocaleString("ja-JP") : "日時不明";
+
+        entry.innerHTML = `
+          <strong>回答${index + 1} / ${dateText}</strong>
+          <p>
+            はい／いいえ: ${item.answerType || "不明"}<br>
+            デート内容: ${item.dateType || "未選択"}<br>
+            ご飯: ${item.food || "未選択"}<br>
+            月: ${item.month ? item.month + "月" : "未選択"}<br>
+            日: ${item.dates && item.dates.length ? item.dates.join("日, ") + "日" : "未選択"}
+          </p>
+        `;
+        adminContent.appendChild(entry);
+      });
+    }
+
+    document.querySelectorAll(".option-btn[data-next]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-next");
+        if (next === "screen-no") {
+          showScreen("screen-no");
+        } else {
+          showScreen(next);
+        }
+      });
+    });
+
+    document.querySelectorAll(".option-btn[data-type]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        appState.selectedType = btn.getAttribute("data-type");
+        showScreen("screen-step3");
+      });
+    });
+
+    document.querySelectorAll(".option-btn[data-food]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        appState.selectedFood = btn.getAttribute("data-food");
+        renderMonthButtons();
+        updateSelectedSummary();
+        showScreen("screen-step4");
+      });
+    });
+
+    document.getElementById("confirmDatesBtn").addEventListener("click", () => {
+      if (!appState.selectedMonth) {
+        alert("月を選んでください");
+        return;
+      }
+      if (!appState.selectedDates.length) {
+        alert("日を1つ以上選んでください");
+        return;
+      }
+
+      finalSummary.innerHTML = `
+        <strong>デート内容:</strong> ${appState.selectedType}<br>
+        <strong>ご飯:</strong> ${appState.selectedFood}<br>
+        <strong>候補月:</strong> ${appState.selectedMonth}月<br>
+        <strong>候補日:</strong> ${appState.selectedDates.join("日, ")}日
+      `;
+
+      showScreen("screen-final");
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", () => {
+      saveAnswer({
+        answerType: "はい",
+        dateType: appState.selectedType,
+        food: appState.selectedFood,
+        month: appState.selectedMonth,
+        dates: appState.selectedDates
+      });
+
+      renderAdminList();
+
+      const message = document.createElement("div");
+      message.textContent = "回答を保存��ました。";
+      message.style.marginTop = "16px";
+      message.style.textAlign = "center";
+      message.style.color = "#666";
+      message.style.fontWeight = "700";
+
+      finalSummary.appendChild(message);
+
+      try {
+        window.close();
+      } catch (e) {
+        setTimeout(() => {
+          alert("このブラウザでは閉じられないことがあります。タブを手動で閉じてください。");
+        }, 150);
+      }
+    });
+
+    document.getElementById("closeNoBtn").addEventListener("click", () => {
+      try {
+        window.close();
+      } catch (e) {
+        alert("ブラウザのタブを手動で閉じてください");
+      }
+    });
+
+    document.getElementById("adminToggleBtn").addEventListener("click", () => {
+      const pw = prompt("管理者パスワードを入力してください");
+      if (pw === "Soushi0308") {
+        renderAdminList();
+        document.getElementById("adminPanel").classList.add("active");
+      } else if (pw !== null) {
+        alert("パスワードが違います");
+      }
+    });
+
+    document.getElementById("closeAdminBtn").addEventListener("click", () => {
+      document.getElementById("adminPanel").classList.remove("active");
+    });
+
+    document.getElementById("clearAnswersBtn").addEventListener("click", () => {
+      const ok = confirm("全ての回答を削除しますか？");
+      if (ok) {
+        localStorage.removeItem(STORAGE_KEY);
+        appState.answers = [];
+        renderAdminList();
+      }
+    });
+
+    renderMonthButtons();
+    renderDayButtons();
+    updateSelectedSummary();
+    renderAdminList();
+  </script>
+</body>
+</html>
